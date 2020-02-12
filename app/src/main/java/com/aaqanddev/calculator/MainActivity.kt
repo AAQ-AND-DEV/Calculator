@@ -4,10 +4,10 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
+import androidx.activity.viewModels
+import androidx.lifecycle.Observer
 import kotlinx.android.synthetic.main.activity_main.*
-import java.lang.NumberFormatException
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -15,10 +15,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        val viewModel : CalculatorViewModel by viewModels()
+
+        viewModel.stringResult.observe(this, Observer<String> {stringResult -> result.setText(stringResult)})
+        viewModel.stringNewNumber.observe(this, Observer<String> {stringNum -> newNumber.setText(stringNum)})
+        viewModel.stringOperation.observe(this, Observer<String> {stringOp -> operation.text = stringOp})
 
         val listener = View.OnClickListener { v ->
-            val b = v as Button
-            newNumber.append(b.text)
+            viewModel.digitPressed((v as Button).text.toString())
         }
         button0.setOnClickListener(listener)
         button1.setOnClickListener(listener)
@@ -33,16 +37,8 @@ class MainActivity : AppCompatActivity() {
         buttonDot.setOnClickListener(listener)
 
         val opListener = View.OnClickListener { v ->
-            val op = (v as Button).text.toString()
-            try {
-                val value = newNumber.text.toString().toDouble()
-                performOperation(value, op)
+            viewModel.operandPressed((v as Button).text.toString())
 
-            } catch (e: NumberFormatException) {
-                newNumber.setText("")
-            }
-            pendingOperation = op
-            operation.text = pendingOperation
         }
         buttonEquals.setOnClickListener(opListener)
         buttonDiv.setOnClickListener(opListener)
@@ -51,28 +47,15 @@ class MainActivity : AppCompatActivity() {
         buttonAdd.setOnClickListener(opListener)
 
         val negListener = View.OnClickListener {
-            if (newNumber.text.isNotEmpty()){
-                try{
-                    var value = newNumber.text.toString().toDouble()
-                    value = value!! * -1.0
-                    //operand1 = value
-                    newNumber.setText(value.toString())
+            viewModel.negPressed()
 
-                } catch (e: NumberFormatException){
-                    newNumber.setText("")
-                }
-            } else{
-                newNumber.setText("-")
-            }
         }
         buttonNeg.setOnClickListener(negListener)
 
+
+
         buttonClear.setOnClickListener {
-            operand1 = null
-            result.setText("")
-            newNumber.setText("")
-            operation.setText("")
-            pendingOperation = "="
+            viewModel.clearPressed()
 
         }
     }
